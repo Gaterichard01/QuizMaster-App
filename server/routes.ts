@@ -1,10 +1,16 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import { loginSchema, registerSchema } from "@shared/schema";
 import { z } from "zod";
+
+declare module "express-session" {
+  interface SessionData {
+    userId: number;
+  }
+}
 
 const MemoryStoreSession = MemoryStore(session);
 
@@ -26,14 +32,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Auth middleware
   const requireAuth = (req: any, res: any, next: any) => {
-    if (!req.session.userId) {
+    if (!req.session?.userId) {
       return res.status(401).json({ message: "Non autorisé" });
     }
     next();
   };
 
   const requireAdmin = async (req: any, res: any, next: any) => {
-    if (!req.session.userId) {
+    if (!req.session?.userId) {
       return res.status(401).json({ message: "Non autorisé" });
     }
     
@@ -197,7 +203,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const questions = await storage.getQuestionsByTheme(themeId);
       
       // Remove correct answers for non-admin users
-      const user = await storage.getUser(req.session.userId);
+      const user = await storage.getUser(req.session.userId!);
       if (user?.role !== "admin") {
         const questionsWithoutAnswers = questions.map(q => {
           const { correctAnswer, explanation, ...questionWithoutAnswer } = q;

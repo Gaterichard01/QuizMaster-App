@@ -32,7 +32,7 @@ export const questions = pgTable("questions", {
   options: json("options").$type<string[]>().notNull(),
   correctAnswer: integer("correct_answer").notNull(), // 0-3 index
   difficulty: text("difficulty").notNull().default("medium"), // "easy" | "medium" | "hard"
-  explanation: text("explanation"),
+  explanation: text("explanation").default(""),
 });
 
 export const quizSessions = pgTable("quiz_sessions", {
