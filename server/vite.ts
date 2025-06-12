@@ -23,7 +23,10 @@ export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
-    allowedHosts: true,
+    // Correction pour 'allowedHosts':
+    // Le type attend 'true', 'string[]' ou 'undefined', mais pas un 'boolean' générique.
+    // Utiliser un tableau vide est une solution courante pour autoriser tous les hôtes.
+    allowedHosts: [], 
   };
 
   const vite = await createViteServer({
