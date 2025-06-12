@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { log } from "./vite"; // Nous n'avons besoin que de 'log' ici, 'setupVite' et 'serveStatic' sont supprimés car le backend ne gère pas le frontend sur Render.
 
 const app = express();
 app.use(express.json());
@@ -37,7 +37,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  // `registerRoutes` est appelé ici. Il est supposé configurer 'app' et peut-être retourner une instance de serveur HTTP si nécessaire.
+  // En général avec Express, `app.listen` est suffisant.
+  await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -47,20 +49,21 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+  // --- Modifications clés ici ---
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen(port, "localhost", () => {
+  // Supprimez tout le bloc conditionnel 'if (app.get("env") === "development") { ... } else { ... }'
+  // car le backend ne doit plus servir le frontend ni gérer Vite en production sur Render.
+
+  // Convertit la variable d'environnement PORT en nombre, ou utilise 5000 par défaut.
+  const port = parseInt(process.env.PORT || '5000', 10);
+  // Écoute sur toutes les interfaces réseau pour être accessible par Render.
+  const hostname = '0.0.0.0';
+
+  // Le serveur Express écoute directement sur le port et le hostname spécifiés.
+  app.listen(port, hostname, () => {
     log(`serving on port ${port}`);
   });
+
+  // --- Fin des modifications clés ---
+
 })();
